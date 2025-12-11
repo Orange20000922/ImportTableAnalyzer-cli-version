@@ -187,6 +187,7 @@ bool ImageTableAnalyzer::IATHooked(string dllfile, int PID)
 	if (!bRet) {
 		CloseHandle(hProcess);
 		cout << "Write process memory failed!" << GetLastError() << endl;
+		return false;
 	}
 	LPVOID lpFuncAddress = (LPVOID)LoadLibraryA;
 	HANDLE remoteThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)lpFuncAddress, lpdlladdr, 0, NULL);
