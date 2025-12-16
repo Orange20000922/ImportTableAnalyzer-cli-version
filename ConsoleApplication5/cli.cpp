@@ -5,20 +5,35 @@
 #include <queue>
 #include <vector>
 #include <Windows.h>
-void CLI::Run(string command)
+#include "climodule.h"
+
+// 静态成员变量定义
+vector<queue<string>> CLI::commands = vector<queue<string>>();
+queue<string> CLI::args = queue<string>();
+
+void CLI::Run(string& command)
 {
 	queue<string> theargs = SplitString(command, ' ');
-	ImageTableAnalyzer* analyzer = new ImageTableAnalyzer();
 	vector<queue<string>> thecommands = GetCommands();
+    vector<queue<string>>::iterator it = thecommands.begin();
+	vector<queue<string>> subcommands = vector<queue<string>>();
+	vector<queue<string>>::iterator sit = subcommands.begin();
+	vector<LPVOID> argsinstances = vector<LPVOID>();
     int count = 0;
+    int commandcount = 0;
+
+	if (thecommands.empty()) {
+		return;
+	}
+
 	int* sizes = new int[thecommands.size()+1];
 	ZeroMemory(sizes, sizeof(int) * (thecommands.size() + 1));
     vector<int> lowersizes = vector<int>();
 	vector<int> uppersizes = vector<int>();
 	int middlesize = 0;
 	int maxsize = 0;
-    for (int i = 0; i < thecommands.size();i++) {
-		sizes[i] = thecommands[i].size();
+    for (size_t i = 0; i < thecommands.size(); i++) {
+		sizes[i] = (int)thecommands[i].size();
         middlesize = sizes[0];
         if (sizes[i]>=middlesize) {
 			uppersizes.push_back(sizes[i]);
@@ -39,13 +54,55 @@ void CLI::Run(string command)
         }
         count++;
     }
+
+	// 检查越界
+	if (uppersizes.empty()) {
+		delete[] sizes;
+		return;
+	}
 	maxsize = uppersizes[0];
+
     while (!theargs.empty()) {
         if (count<maxsize) {
-            
+          while (it != thecommands.end()) {
+              queue<string> currentcommand = *it;
+			  queue<string> tempcommand = currentcommand;
+              for (int i = 0; i < count; i++) {
+				  currentcommand.pop();
+              }
+              if (currentcommand.front().compare(theargs.front()) == 0) {
+                 subcommands.push_back(tempcommand);
+              }
+              else {
+                  if (currentcommand.front().find('|') != string::npos) {
+                      if (currentcommand.front().compare("|file") == 0) {
+                          HANDLE hFile = CreateFileA(theargs.front().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                          if (hFile != INVALID_HANDLE_VALUE) {
+                              subcommands.push_back(tempcommand);
+                              argsinstances.push_back((LPVOID)&theargs.front());
+                          }
+                          CloseHandle(hFile);
+                      }
+                      if (currentcommand.front().compare("|pid") == 0) {
+                          HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, stoi(theargs.front()));
+                          if (hProcess != INVALID_HANDLE_VALUE) {
+                              subcommands.push_back(tempcommand);
+                              argsinstances.push_back((LPVOID)&theargs.front());
+                          }
+                          CloseHandle(hProcess);
+                      }
+                  }
+              }
+              it++;
+           }
+		  thecommands = subcommands;
+		  subcommands.clear();
         }
+		theargs.pop();
         count++;
     }
+
+    delete[] sizes;
 }
 queue<string> CLI::SplitString(string& str, char delimiter)
 {
@@ -53,20 +110,26 @@ queue<string> CLI::SplitString(string& str, char delimiter)
     while(str.find(delimiter,count)!=string::npos){
 		int index = str.find(delimiter, count);
         int tokenLength = index - count;
-        char* token = new char[tokenLength+3];
-        for (int i = count; i < str.find(delimiter, count) - count; i++) {
-			token[i-count] = str.c_str()[i];
-        }
-        token[tokenLength] = '\0';
+		string token = string();
+		token = str.substr(count, tokenLength);
         count = str.find(delimiter, count) + 1;
 		args.push(string(token));
-        delete token;
     }
+	args.push(string(str.substr(count, str.length() - count)));
     return args;
 }
-void CLI::ParseCommands(string& command)
+ void CLI::ParseCommands(string& command,LPVOID instanceptr)
 {
-	commands = vector<queue<string>>();
 	queue<string> cmdQueue = SplitString(command, ' ');
 	commands.push_back(cmdQueue);
+	CLIModule::RegisterModule(command, (LPVOID)instanceptr, TRUE);
 }
+
+ CLI::CLI()
+ {
+ }
+
+ CLI::~CLI()
+ {
+     delete analyzer;
+ }

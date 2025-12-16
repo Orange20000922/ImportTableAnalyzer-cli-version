@@ -7,18 +7,20 @@
 #include <vector>
 #include <sstream>
 #include "ImageTable.h"
+#include "cli.h"
 using namespace std;
 int main()
 {
 	ImageTableAnalyzer* analyzer = new ImageTableAnalyzer();
-	string pefile = "";
-	cout << "PE File:" << endl;
+	cout << "PE file:" << endl;
+	string pefile;
 	cin >> pefile;
 	vector<string> dlllist = analyzer->AnalyzeTableForDLL(pefile);
 	if (dlllist.size()!=0) {
 		for (int i = 0; i < dlllist.size(); i++) {
 			cout << dlllist[i] << endl;
 		}
+		MessageBox(nullptr, L"成功读取", L"Return", MB_OK);
 	}
 	else {
 		cout << "can't find the IAT" << endl;
@@ -28,7 +30,7 @@ int main()
 		for (auto& [dll, funcs] : funclist) {
 			cout << "DLL: " << dll << endl;
 			for ( auto& func : funcs) {
-				DWORD addr = analyzer->GetFuncaddressByName(func, pefile);
+				ULONGLONG addr = analyzer->GetFuncaddressByName(func, pefile);
 				cout << "  " << func <<" :  " <<addr << endl;
 			}
 		}

@@ -24,12 +24,24 @@
     <ClCompile Include="cli.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="climodule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cmd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImageTable.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="cli.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="climodule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cmd.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

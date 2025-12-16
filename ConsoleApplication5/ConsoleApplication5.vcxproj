@@ -129,12 +129,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cli.cpp" />
+    <ClCompile Include="climodule.cpp" />
+    <ClCompile Include="cmd.cpp" />
     <ClCompile Include="ConsoleApplication5.cpp" />
     <ClCompile Include="ImageTable.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="climodule.h" />
     <ClInclude Include="ImageTable.h" />
     <ClInclude Include="cli.h" />
+    <ClInclude Include="cmd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

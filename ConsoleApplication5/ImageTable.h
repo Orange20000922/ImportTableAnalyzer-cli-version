@@ -9,14 +9,14 @@ class ImageTableAnalyzer
 public:
 	vector<string> dllList = vector<string>();
 	map<string, vector<string>> funcList = map<string, vector<string>>();
-	DWORD funcAddress = NULL;
+	ULONGLONG funcAddress = 0;
 	LPVOID lpBuffer = NULL;
 	HANDLE hFile = NULL;
 	HANDLE hFileMapping = NULL;
 public:
 	vector<string> AnalyzeTableForDLL(string file);
 	map<string, vector<string>> AnalyzeTableForFunctions(string file);
-	DWORD GetFuncaddressByName(string name,string file);
+	ULONGLONG GetFuncaddressByName(string name,string file);
 	bool IsImagineTable(LPVOID lpBuffer);
 	bool IATHooked(string dllfile,int PID);
 	int GetPIDByName(wstring processname);
