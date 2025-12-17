@@ -6,11 +6,10 @@
 #include <vector>
 #include <Windows.h>
 #include "climodule.h"
-
+#include "cmd.h"
 // 静态成员变量定义
 vector<queue<string>> CLI::commands = vector<queue<string>>();
 queue<string> CLI::args = queue<string>();
-
 void CLI::Run(string& command)
 {
 	queue<string> theargs = SplitString(command, ' ');
@@ -61,7 +60,6 @@ void CLI::Run(string& command)
 		return;
 	}
 	maxsize = uppersizes[0];
-
     while (!theargs.empty()) {
         if (count<maxsize) {
           while (it != thecommands.end()) {
@@ -91,6 +89,10 @@ void CLI::Run(string& command)
                           }
                           CloseHandle(hProcess);
                       }
+                      if (currentcommand.front().compare("|name")==0) {
+                          subcommands.push_back(tempcommand);
+                          argsinstances.push_back((LPVOID)&theargs.front());
+                      }
                   }
               }
               it++;
@@ -101,7 +103,39 @@ void CLI::Run(string& command)
 		theargs.pop();
         count++;
     }
-
+    if (thecommands.size()==1) {
+		string currectcommandname = string();
+        while (!thecommands[0].empty()) {
+            currectcommandname += thecommands[0].front() + " ";
+            thecommands[0].pop();
+        }
+		CLIModule* climodule = new CLIModule();
+		LPVOID commandclassptr = climodule->GetModuleClassPtrByName(currectcommandname);
+        if (commandclassptr != nullptr) {
+            if (PrintAllCommand::CheckName(currectcommandname)&&climodule->GetModuleFlagByName(currectcommandname)) {
+				PrintAllCommand* printallcommand = (PrintAllCommand*)commandclassptr;
+                printallcommand->Execute(currectcommandname);
+            }
+            if (HelpCommand::CheckName(currectcommandname) && climodule->GetModuleFlagByName(currectcommandname)) {
+                HelpCommand* helpcommand = (HelpCommand*)commandclassptr;
+                helpcommand->Execute(currectcommandname);
+            }
+            if (QueueDLLsCommand::CheckName(currectcommandname) && climodule->GetModuleFlagByName(currectcommandname)) {
+				QueueDLLsCommand* queuedllscommand = (QueueDLLsCommand*)commandclassptr;
+                queuedllscommand->AcceptArgs(argsinstances);
+                queuedllscommand->Execute(currectcommandname);
+            }
+            if (GetProcessFuncAddressCommand::CheckName(currectcommandname) && climodule->GetModuleFlagByName(currectcommandname)) {
+                GetProcessFuncAddressCommand* getprocessfuncaddresscommand = (GetProcessFuncAddressCommand*)commandclassptr;
+                getprocessfuncaddresscommand->AcceptArgs(argsinstances);
+                getprocessfuncaddresscommand->Execute(currectcommandname);
+            }
+            if (ExitCommand::CheckName(currectcommandname) && climodule->GetModuleFlagByName(currectcommandname)) {
+				ExitCommand* exitcommand = (ExitCommand*)commandclassptr;
+				exitcommand->Execute(currectcommandname);
+            }
+        }
+    }
     delete[] sizes;
 }
 queue<string> CLI::SplitString(string& str, char delimiter)
@@ -124,11 +158,14 @@ queue<string> CLI::SplitString(string& str, char delimiter)
 	commands.push_back(cmdQueue);
 	CLIModule::RegisterModule(command, (LPVOID)instanceptr, TRUE);
 }
-
  CLI::CLI()
  {
+     ParseCommands(PrintAllCommand::name,PrintAllCommand::GetInstancePtr());
+	 ParseCommands(HelpCommand::name, HelpCommand::GetInstancePtr());
+	 ParseCommands(QueueDLLsCommand::name, QueueDLLsCommand::GetInstancePtr());
+	 ParseCommands(GetProcessFuncAddressCommand::name, GetProcessFuncAddressCommand::GetInstancePtr());
+	 ParseCommands(ExitCommand::name, ExitCommand::GetInstancePtr());
  }
-
  CLI::~CLI()
  {
      delete analyzer;

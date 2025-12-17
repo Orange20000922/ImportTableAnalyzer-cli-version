@@ -230,6 +230,10 @@ bool ImageTableAnalyzer::IATHooked(string dllfile, int PID)
 		return false;
 	}
 	LPVOID lpdlladdr=VirtualAllocEx(hProcess, NULL, sizedllfilename, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+	if (lpdlladdr==NULL) {
+		cout << "alloc object process memory failed!" << GetLastError() << endl;
+		return false;
+	}
 	BOOL bRet=WriteProcessMemory(hProcess, lpdlladdr, dllfile.c_str(), sizedllfilename, NULL);
 	if (!bRet) {
 		CloseHandle(hProcess);

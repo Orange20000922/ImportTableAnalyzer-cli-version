@@ -28,6 +28,25 @@ LPVOID CLIModule::GetModuleClassPtrByName(string name)
 	}
 	return nullptr;
 }
+BOOL CLIModule::SetModuleFlagByName(string name, BOOL flag)
+{
+	for (auto moduleclassptr : moduleclasspointers) {
+		if (moduleclassptr->Name.compare(name) == 0) {
+			moduleclassptr->Flag = flag;
+			return true;
+		}
+	}
+	return false;
+}
+BOOL CLIModule::GetModuleFlagByName(string name)
+{
+	for (auto moduleclassptr : moduleclasspointers) {
+		if (moduleclassptr->Name.compare(name) == 0) {
+			return moduleclassptr->Flag;
+		}
+	}
+	return false;
+}
 vector<string> CLIModule::GetAllModuleNames()
 {
 	vector<string> names = vector<string>();

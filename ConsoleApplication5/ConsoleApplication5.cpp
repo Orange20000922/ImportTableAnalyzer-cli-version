@@ -8,37 +8,11 @@
 #include <sstream>
 #include "ImageTable.h"
 #include "cli.h"
+#include "cmd.h"
 using namespace std;
 int main()
 {
-	ImageTableAnalyzer* analyzer = new ImageTableAnalyzer();
-	cout << "PE file:" << endl;
-	string pefile;
-	cin >> pefile;
-	vector<string> dlllist = analyzer->AnalyzeTableForDLL(pefile);
-	if (dlllist.size()!=0) {
-		for (int i = 0; i < dlllist.size(); i++) {
-			cout << dlllist[i] << endl;
-		}
-		MessageBox(nullptr, L"成功读取", L"Return", MB_OK);
-	}
-	else {
-		cout << "can't find the IAT" << endl;
-	}
-	map<string, vector<string>> funclist = analyzer->AnalyzeTableForFunctions(pefile);
-	if (funclist.size() != 0) {
-		for (auto& [dll, funcs] : funclist) {
-			cout << "DLL: " << dll << endl;
-			for ( auto& func : funcs) {
-				ULONGLONG addr = analyzer->GetFuncaddressByName(func, pefile);
-				cout << "  " << func <<" :  " <<addr << endl;
-			}
-		}
-	}
-	else {
-		cout << "can't find the IAT" << endl;
-	}
-	delete analyzer;
+    
 	return 0;
 }
 

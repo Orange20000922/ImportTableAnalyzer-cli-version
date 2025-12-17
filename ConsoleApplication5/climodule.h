@@ -20,5 +20,7 @@ public :
 	~CLIModule();
 	static void RegisterModule(string name, LPVOID classptr,BOOL flag);
 	LPVOID GetModuleClassPtrByName(string name);
+	BOOL SetModuleFlagByName(string name, BOOL flag);
+	BOOL GetModuleFlagByName(string name);
 	vector<string> GetAllModuleNames();
 };
