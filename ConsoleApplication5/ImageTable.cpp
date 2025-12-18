@@ -30,6 +30,9 @@ ULONGLONG ImageTableAnalyzer::GetFuncaddressByName(string name,string file)
 	}
 	if (!IsImagineTable(lpBuffer) ){
 		cout << "This is not a valid PE file!" << endl;
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return 0;
 	}
 	DWORD peOffset = ((PIMAGE_DOS_HEADER)lpBuffer)->e_lfanew;
@@ -40,6 +43,9 @@ ULONGLONG ImageTableAnalyzer::GetFuncaddressByName(string name,string file)
 		DWORD importDirRVA = pOptionalHeader64->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
 		if (importDirRVA == 0) {
 			cout << "No import directory!" << endl;
+			UnmapViewOfFile(lpBuffer);
+			CloseHandle(hFileMapping);
+			CloseHandle(hFile);
 			return 0;
 		}
 	    PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)lpBuffer + RVAtoFOA(importDirRVA,lpBuffer));
@@ -50,7 +56,7 @@ ULONGLONG ImageTableAnalyzer::GetFuncaddressByName(string name,string file)
 					PIMAGE_IMPORT_BY_NAME pImportByName = (PIMAGE_IMPORT_BY_NAME)((DWORD_PTR)lpBuffer + RVAtoFOA((DWORD)IAT->u1.AddressOfData,lpBuffer));
 					if (name.compare(string((char*)pImportByName->Name))==0) {
 						ULONGLONG ImageBase = pOptionalHeader64->ImageBase;
-						funcAddress = IAT->u1.AddressOfData + ImageBase;
+						funcAddress = pImportDescriptor->FirstThunk + ImageBase;
 						return funcAddress;
 					}
 				}
@@ -83,6 +89,9 @@ vector<string> ImageTableAnalyzer::AnalyzeTableForDLL(string file)
 	}
 	if (!IsImagineTable(lpBuffer)) {
 		cout << "This is not a valid PE file!" << endl;
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return vector<string>();
 	}
 	DWORD peOffset = ((PIMAGE_DOS_HEADER)lpBuffer)->e_lfanew;
@@ -100,11 +109,17 @@ vector<string> ImageTableAnalyzer::AnalyzeTableForDLL(string file)
 		importDirRVA = pNtHeaders32->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
 	}
 	else {
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return vector<string>();
 	}
 
 	if (importDirRVA == 0) {
 		cout << "No import directory!" << endl;
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return vector<string>();
 	}
 	PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)lpBuffer+RVAtoFOA(importDirRVA, lpBuffer));
@@ -138,6 +153,9 @@ map<string, vector<string>> ImageTableAnalyzer::AnalyzeTableForFunctions(string 
 	}
 	if (!IsImagineTable(lpBuffer)) {
 		cout << "This is not a valid PE file!" << endl;
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return map<string, vector<string>>();
 	}
 	DWORD peOffset = ((PIMAGE_DOS_HEADER)lpBuffer)->e_lfanew;
@@ -159,17 +177,23 @@ map<string, vector<string>> ImageTableAnalyzer::AnalyzeTableForFunctions(string 
 		is64bit = FALSE;
 	}
 	else {
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return map<string, vector<string>>();
 	}
 
 	if (importDirRVA == 0) {
 		cout << "No import directory!" << endl;
+		UnmapViewOfFile(lpBuffer);
+		CloseHandle(hFileMapping);
+		CloseHandle(hFile);
 		return map<string, vector<string>>();
 	}
 	PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)lpBuffer + RVAtoFOA(importDirRVA,lpBuffer));
 	while (pImportDescriptor->Name != 0) {
 		char* dllName = (char*)((DWORD_PTR)lpBuffer + RVAtoFOA(pImportDescriptor->Name,lpBuffer));
-		funcNames.clear();  // 清空函数名列表，避免累积
+		funcNames.clear();  
 		if (is64bit) {
 			auto IAT = (PIMAGE_THUNK_DATA64)((DWORD_PTR)lpBuffer + RVAtoFOA(pImportDescriptor->FirstThunk, lpBuffer));
 			while (IAT->u1.Ordinal != 0) {

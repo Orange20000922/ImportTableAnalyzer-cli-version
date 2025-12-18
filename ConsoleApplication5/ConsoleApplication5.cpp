@@ -10,9 +10,23 @@
 #include "cli.h"
 #include "cmd.h"
 using namespace std;
+string PrintAllCommand::name = "printallcommand -list";
+string HelpCommand::name = "help |name";
+string QueueDLLsCommand::name = "queuedllsname |file";
+string GetProcessFuncAddressCommand::name = "getfuncaddr |file |name";
+string IATHookDLLCommand::name = "IATHook |file |pid";
+string ExitCommand::name = "exit";
 int main()
 {
     //TUI代码编写在此处
+	CLI cli = CLI();
+	cout << "这里是Orange的系统文件分析工具，输入 'help ' 获取帮助信息。" << endl;
+	while (true) {
+		string command = string();
+		cout << "Command> ";
+		getline(cin, command);
+		cli.Run(command);
+	}
 	return 0;
 }
 

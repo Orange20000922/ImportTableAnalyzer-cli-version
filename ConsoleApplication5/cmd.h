@@ -9,7 +9,7 @@ class  Command
 {
     protected:
 		BOOL FlagHasArgs = false;
-		static vector<LPVOID> ArgsList;
+		
 	public:
 		virtual void AcceptArgs(vector<LPVOID> argslist)=0;
 		virtual void Execute(string command) = 0;
@@ -36,6 +36,7 @@ class HelpCommand : public Command
 {
 public:
 	static string name;
+	static vector<LPVOID> ArgsList;
 public:
 	HelpCommand();
 	void AcceptArgs(vector<LPVOID> argslist) override;
@@ -53,6 +54,7 @@ class QueueDLLsCommand : public Command
 {
     public:
 	static string name;
+	static vector<LPVOID> ArgsList;
 	public:
 		QueueDLLsCommand();
 		~QueueDLLsCommand();
@@ -71,6 +73,7 @@ class GetProcessFuncAddressCommand : public Command
 {
     public:
 	static string name;
+	static vector<LPVOID> ArgsList;
 	public:
 	GetProcessFuncAddressCommand();
 	~GetProcessFuncAddressCommand();
@@ -89,6 +92,7 @@ class IATHookDLLCommand : public Command
 {
     public:
 	static string name;
+	static vector<LPVOID> ArgsList;
 	public:
 	IATHookDLLCommand();
 	~IATHookDLLCommand();
@@ -103,10 +107,12 @@ class IATHookDLLCommand : public Command
 		return name;
 	}
 };
+
 class ExitCommand : public Command
 {
     public:
 	static string name;
+	static vector<LPVOID> ArgsList;
 	public:
 		ExitCommand();
 	void AcceptArgs(vector<LPVOID> argslist) override;

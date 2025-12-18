@@ -1,6 +1,7 @@
 #include "climodule.h"
 #include <Windows.h>
-
+#include <iostream>
+using namespace std;
 // 静态成员变量定义
 CLIModule::ModuleClassPtr CLIModule::ModulePtr = nullptr;
 vector<CLIModule::ModuleClassPtr> CLIModule::moduleclasspointers = vector<CLIModule::ModuleClassPtr>();
@@ -21,7 +22,8 @@ void CLIModule::RegisterModule(string name, LPVOID classptr, BOOL flag)
 }
 LPVOID CLIModule::GetModuleClassPtrByName(string name)
 {
-	for (auto moduleclassptr:moduleclasspointers) {
+	
+	for (ModuleClassPtr moduleclassptr:moduleclasspointers) {
 		if (moduleclassptr->Name.compare(name)==0) {
 			return moduleclassptr->ClassPtr;
 		}
@@ -40,7 +42,7 @@ BOOL CLIModule::SetModuleFlagByName(string name, BOOL flag)
 }
 BOOL CLIModule::GetModuleFlagByName(string name)
 {
-	for (auto moduleclassptr : moduleclasspointers) {
+	for (ModuleClassPtr moduleclassptr : moduleclasspointers) {
 		if (moduleclassptr->Name.compare(name) == 0) {
 			return moduleclassptr->Flag;
 		}
@@ -50,7 +52,7 @@ BOOL CLIModule::GetModuleFlagByName(string name)
 vector<string> CLIModule::GetAllModuleNames()
 {
 	vector<string> names = vector<string>();
-	for (auto moduleclassptr : moduleclasspointers) {
+	for (ModuleClassPtr moduleclassptr : moduleclasspointers) {
 		names.push_back(moduleclassptr->Name);
 	}
 	return names;

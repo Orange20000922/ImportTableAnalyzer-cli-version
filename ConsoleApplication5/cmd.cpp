@@ -5,15 +5,11 @@
 #include <queue>
 #include "cli.h"
 using namespace std;
-     string PrintAllCommand::name = "printallcommand";
-	 string HelpCommand::name = "helpcommand";
-	 string QueueDLLsCommand::name = "queuedllsname |file";
-	 string GetProcessFuncAddressCommand::name = "getfuncaddr |file |name";
-	 string IATHookDLLCommand::name = "IATHook |file |pid";
-	 string ExitCommand::name = "exit";
-     vector<LPVOID> PrintAllCommand::ArgsList = vector<LPVOID>();
 	 vector<LPVOID> HelpCommand::ArgsList = vector<LPVOID>();
 	 vector<LPVOID> QueueDLLsCommand::ArgsList = vector<LPVOID>();
+	 vector<LPVOID> GetProcessFuncAddressCommand::ArgsList = vector<LPVOID>();
+	 vector<LPVOID> IATHookDLLCommand::ArgsList = vector<LPVOID>();
+	 vector<LPVOID> ExitCommand::ArgsList = vector<LPVOID>();
      PrintAllCommand::PrintAllCommand() {
 		FlagHasArgs = FALSE;
      }
@@ -32,31 +28,61 @@ using namespace std;
 			return;
 		}
 		vector<queue<string>> allCommands = CLI::GetCommands();
-		for (const auto& cmdQueue : allCommands) {
-			queue<string> tempQueue = cmdQueue; // Create a copy to preserve the original
+		for (auto& cmdQueue : allCommands) {
+			string output = "";
+			queue<string> tempQueue = cmdQueue;
+			int count = 0;
+			int size = tempQueue.size();// Create a copy to preserve the original
 			while (!tempQueue.empty()) {
-				cout << tempQueue.front() << " ";
-				tempQueue.pop();
+				if (count<size) {
+					output += tempQueue.front() + " ";
+					tempQueue.pop();
+				}
+				else {
+					output += tempQueue.front();
+					tempQueue.pop();
+				}
+				count++;
 			}
-			cout << endl;
+			cout << output << endl;
 		}
     }
     BOOL PrintAllCommand::HasArgs()  {
 		return FlagHasArgs;
     }
     HelpCommand::HelpCommand() {
-		FlagHasArgs = FALSE;
+		FlagHasArgs = TRUE;
     }
 	void HelpCommand::AcceptArgs(vector<LPVOID> argslist)  {
-		// This command does not accept any arguments
+		HelpCommand::ArgsList = argslist;
 	}
 	void HelpCommand::Execute(string command)  {
 		if (!CheckName(command)) {
 			return;
 		}
-		cout << "Available Commands:" << endl;
-		cout << "printall - Prints all registered commands." << endl;
-		cout << "help - Displays this help message." << endl;
+		vector<string> currectcommands = vector<string>();
+		cout << "Available args:" << endl;
+		cout << "|file is the place where you put the file you want to analyze" << endl;
+		cout << "|pid is the place where you put process id" << endl;
+		cout << "|name is the place where you put function name all process name" << endl;
+		if (ArgsList.size()==1) {
+			for (auto command : CLI::GetCommands()) {
+				if (command.front().compare(*(string*)ArgsList[0]) == 0) {
+					string currectcommand = "";
+					while (!command.empty()) {
+						currectcommand += command.front() + " ";
+						currectcommands.push_back(currectcommand);
+						command.pop();
+					}
+				}
+			}
+			for (auto command:currectcommands) {
+				cout << command << endl;
+			}
+		}
+		else {
+			return;
+		}
 	}
 	BOOL HelpCommand::HasArgs(){
 		return FlagHasArgs;
@@ -96,7 +122,6 @@ using namespace std;
 				for (int i = 0; i < dlllist.size(); i++) {
 					cout << dlllist[i] << endl;
 				}
-				MessageBox(nullptr, L"³É¹¦¶ÁÈ¡", L"Return", MB_OK);
 			}
 			else {
 				cout << "can't find the IAT" << endl;
@@ -139,8 +164,8 @@ using namespace std;
 			cout << "Invaild Args!" << endl;
 		}
 		else {
-			string& funcname = *(string*)ArgsList[0];
-			string& pefile = *(string*)ArgsList[1];
+			string& funcname = *(string*)ArgsList[1];
+			string& pefile = *(string*)ArgsList[0];
 			ULONGLONG funcaddress = analyzer->GetFuncaddressByName(funcname, pefile);
 			if (funcaddress != 0) {
 				cout << "Function Address: 0x" << hex << funcaddress << endl;
@@ -181,6 +206,7 @@ using namespace std;
 		ImageTableAnalyzer* analyzer = new ImageTableAnalyzer();
 		if (ArgsList.size() != 2) {
 			cout << "Invaild Args!" << endl;
+			delete analyzer;
 			return;
 		}
 		else {
@@ -192,11 +218,9 @@ using namespace std;
 			bool result = analyzer->IATHooked(dllfile, analyzer->GetPIDByName(wprocessname));
 			if (result) {
 				cout << "IAT Hooked successfully!" << endl;
-				return;
 			}
 			else {
 				cout << "IAT Hook failed!" << endl;
-				return;
 			}
 		}
 		delete analyzer;
