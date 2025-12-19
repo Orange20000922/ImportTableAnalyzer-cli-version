@@ -13,22 +13,34 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="源文件\FileRestore">
+      <UniqueIdentifier>{97944d26-1f2c-4d9d-a632-af6fd7c01dca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ImageTableAnalyzer">
+      <UniqueIdentifier>{2367c4f2-cd10-455c-98c7-3d525f028e1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\CLI">
+      <UniqueIdentifier>{e5382751-9a68-4c47-8ba9-544dc381bb98}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConsoleApplication5.cpp">
+    <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FileRestore.cpp">
+      <Filter>源文件\FileRestore</Filter>
     </ClCompile>
     <ClCompile Include="ImageTable.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\ImageTableAnalyzer</Filter>
     </ClCompile>
     <ClCompile Include="cli.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\CLI</Filter>
     </ClCompile>
     <ClCompile Include="climodule.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\CLI</Filter>
     </ClCompile>
     <ClCompile Include="cmd.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\CLI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +54,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="cmd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FileRestore.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -55,8 +55,7 @@ ULONGLONG ImageTableAnalyzer::GetFuncaddressByName(string name,string file)
 				if ((IAT->u1.AddressOfData & IMAGE_ORDINAL_FLAG64) == 0) {
 					PIMAGE_IMPORT_BY_NAME pImportByName = (PIMAGE_IMPORT_BY_NAME)((DWORD_PTR)lpBuffer + RVAtoFOA((DWORD)IAT->u1.AddressOfData,lpBuffer));
 					if (name.compare(string((char*)pImportByName->Name))==0) {
-						ULONGLONG ImageBase = pOptionalHeader64->ImageBase;
-						funcAddress = pImportDescriptor->FirstThunk + ImageBase;
+						funcAddress = IAT->u1.Function;
 						return funcAddress;
 					}
 				}
@@ -130,7 +129,7 @@ vector<string> ImageTableAnalyzer::AnalyzeTableForDLL(string file)
 	}
     return dllList;
 }
-
+//遍历导入表中的函数名称
 map<string, vector<string>> ImageTableAnalyzer::AnalyzeTableForFunctions(string file)
 {
 	vector<string> funcNames;
@@ -255,7 +254,7 @@ bool ImageTableAnalyzer::IATHooked(string dllfile, int PID)
 	}
 	LPVOID lpdlladdr=VirtualAllocEx(hProcess, NULL, sizedllfilename, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
 	if (lpdlladdr==NULL) {
-		cout << "alloc object process memory failed!" << GetLastError() << endl;
+		cout << "Alloc object process memory failed!" << GetLastError() << endl;
 		return false;
 	}
 	BOOL bRet=WriteProcessMemory(hProcess, lpdlladdr, dllfile.c_str(), sizedllfilename, NULL);
@@ -297,6 +296,7 @@ int ImageTableAnalyzer::GetPIDByName(wstring processname)
 	CloseHandle(hshapshot);
 	return 0;
 }
+//RVA转换为FOA
 DWORD ImageTableAnalyzer::RVAtoFOA(DWORD rva, LPVOID lpBuffer)
 {
 	DWORD peOffset = ((PIMAGE_DOS_HEADER)lpBuffer)->e_lfanew;

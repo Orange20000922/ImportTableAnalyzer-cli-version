@@ -1,6 +1,7 @@
 #include "climodule.h"
 #include <Windows.h>
 #include <iostream>
+#include "cli.h"
 using namespace std;
 // 静态成员变量定义
 CLIModule::ModuleClassPtr CLIModule::ModulePtr = nullptr;
@@ -19,6 +20,10 @@ void CLIModule::RegisterModule(string name, LPVOID classptr, BOOL flag)
 	newModule->ClassPtr = classptr;
 	newModule->Flag = flag;
 	moduleclasspointers.push_back(newModule);
+}
+void CLIModule::UnregisterModules()
+{
+	CLIModule::moduleclasspointers.clear();
 }
 LPVOID CLIModule::GetModuleClassPtrByName(string name)
 {

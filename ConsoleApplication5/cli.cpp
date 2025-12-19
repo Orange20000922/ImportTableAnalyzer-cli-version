@@ -7,18 +7,20 @@
 #include <Windows.h>
 #include "climodule.h"
 #include "cmd.h"
+#include <sstream>
 // 静态成员变量定义
 vector<queue<string>> CLI::commands = vector<queue<string>>();
 queue<string> CLI::args = queue<string>();
 bool CLI::initialized = false;
 void CLI::Run(string& command)
 {
+	//解析命令
 	queue<string> theargs = SplitString(command, ' ');
 	vector<queue<string>> thecommands = GetCommands();
 	vector<queue<string>> subcommands = vector<queue<string>>();
+    bool flag = false;
     int count = 0;
     int count1 = 0;
-    int commandcount = 0;
 	if (thecommands.empty()) {
 		return;
 	}
@@ -37,6 +39,7 @@ void CLI::Run(string& command)
             }
             else {
                 if (currentcommand.front().find('|') != string::npos) {
+					cout << currentcommand.front() << endl;
                     if (currentcommand.front().compare("|file") == 0) {
                         HANDLE hFile = CreateFileA(theargs.front().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                         if (hFile != INVALID_HANDLE_VALUE) {
@@ -46,16 +49,30 @@ void CLI::Run(string& command)
                         CloseHandle(hFile);
                     }
                     if (currentcommand.front().compare("|pid") == 0) {
-                        HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, stoi(theargs.front()));
-                        if (hProcess != INVALID_HANDLE_VALUE) {
-                            subcommands.push_back(tempcommand);
-                            argsinstances.push_back((LPVOID)new string(theargs.front()));
+                        for (int i = 0; i < 10;i++) {
+                            ostringstream oss;
+							oss << i;
+                            if (currentcommand.front().find(oss.str())!=string::npos) {
+                                flag = true;
+                            }
                         }
-                        CloseHandle(hProcess);
+                        if (flag) {
+                            cout << "is PID" << endl;
+                            try {
+                                HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, stoi(theargs.front()));
+                                if (hProcess != INVALID_HANDLE_VALUE) {
+                                    subcommands.push_back(tempcommand);
+                                    argsinstances.push_back((LPVOID)new string(theargs.front()));
+                                }
+                                CloseHandle(hProcess);
+                            }
+                            catch (std::invalid_argument&) {
+                                continue;
+                            }
+                        }
                     }
                     if (currentcommand.front().compare("|name") == 0) {
                         subcommands.push_back(tempcommand);
-                        cout << theargs.front() << endl;
                         argsinstances.push_back((LPVOID)new string(theargs.front()));
                     }
                 }
@@ -68,6 +85,7 @@ void CLI::Run(string& command)
               }
               subcommands.clear();
           }
+          cout << count1 << endl;
 		theargs.pop();
         count1++;
     }
@@ -87,6 +105,7 @@ void CLI::Run(string& command)
 			cout << "Command class pointer is null." << endl;
         }
         if (commandclassptr != nullptr) {
+			// 根据命令名称执行相应的命令
             if (PrintAllCommand::CheckName(currectcommandname)&&climodule->GetModuleFlagByName(currectcommandname)) {
 				PrintAllCommand* printallcommand = (PrintAllCommand*)commandclassptr;
                 printallcommand->Execute(currectcommandname);
@@ -110,9 +129,28 @@ void CLI::Run(string& command)
 				ExitCommand* exitcommand = (ExitCommand*)commandclassptr;
 				exitcommand->Execute(currectcommandname);
             }
+            if (IATHookDLLCommand::CheckName(currectcommandname)&&climodule->GetModuleFlagByName(currectcommandname)) {
+                IATHookDLLCommand* iathookcommand = (IATHookDLLCommand*)commandclassptr;
+                iathookcommand->AcceptArgs(argsinstances);
+                iathookcommand->Execute(currectcommandname);
+            }
+            if (PrintAllFunction::CheckName(currectcommandname)&&climodule->GetModuleFlagByName(currectcommandname)) {
+                PrintAllFunction* printfunccommand = (PrintAllFunction*)commandclassptr;
+                printfunccommand->AcceptArgs(argsinstances);
+                printfunccommand->Execute(currectcommandname);
+            }
+            if (IATHookByCreateProc::CheckName(currectcommandname)&&climodule->GetModuleFlagByName(currectcommandname)) {
+				IATHookByCreateProc* iathookbycreateproccommand = (IATHookByCreateProc*)commandclassptr;
+                iathookbycreateproccommand->AcceptArgs(argsinstances);
+				iathookbycreateproccommand->Execute(currectcommandname);
+            }
         }
         delete climodule;
     }
+    else {
+		cout << "Command not found or ambiguous command." << endl;
+    }
+	// 清理参数实例
     argsinstances.clear();
     delete[] sizes;
 }
@@ -123,10 +161,15 @@ queue<string> CLI::SplitString(string& str, char delimiter)
     while(str.find(delimiter,count)!=string::npos){
 		int index = str.find(delimiter, count);
         int tokenLength = index - count;
-		string token = string();
-		token = str.substr(count, tokenLength);
-        count = str.find(delimiter, count) + 1;
-		theargs.push(string(token));
+        if (tokenLength>0) {
+            string token = string();
+            token = str.substr(count, tokenLength);
+            count = str.find(delimiter, count) + 1;
+            theargs.push(string(token));
+        }
+        else {
+            break;
+        }
     }
 	theargs.push(string(str.substr(count, str.length() - count)));
     return theargs;
@@ -145,10 +188,15 @@ queue<string> CLI::SplitString(string& str, char delimiter)
          ParseCommands(QueueDLLsCommand::name, QueueDLLsCommand::GetInstancePtr());
          ParseCommands(GetProcessFuncAddressCommand::name, GetProcessFuncAddressCommand::GetInstancePtr());
          ParseCommands(ExitCommand::name, ExitCommand::GetInstancePtr());
+         ParseCommands(IATHookDLLCommand::name,IATHookDLLCommand::GetInstancePtr());
+         ParseCommands(IATHookByNameCommand::name,IATHookByNameCommand::GetInstancePtr());
+         ParseCommands(PrintAllFunction::name,PrintAllFunction::GetInstancePtr());
+		 ParseCommands(IATHookByCreateProc::name, IATHookByCreateProc::GetInstancePtr());
          initialized = true;
      }
  }
  CLI::~CLI()
  {
+	 CLIModule::UnregisterModules();
      delete analyzer;
  }

@@ -19,6 +19,7 @@ public :
 	CLIModule();
 	~CLIModule();
 	static void RegisterModule(string name, LPVOID classptr,BOOL flag);
+	static void UnregisterModules();
 	LPVOID GetModuleClassPtrByName(string name);
 	BOOL SetModuleFlagByName(string name, BOOL flag);
 	BOOL GetModuleFlagByName(string name);
