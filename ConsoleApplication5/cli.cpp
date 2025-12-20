@@ -16,16 +16,13 @@ void CLI::Run(string& command)
 {
 	//解析命令
 	queue<string> theargs = SplitString(command, ' ');
+	queue<string> theargsCopy = theargs; // 保存参数副本用于后续处理
 	vector<queue<string>> thecommands = GetCommands();
 	vector<queue<string>> subcommands = vector<queue<string>>();
-    bool flag = false;
-    int count = 0;
     int count1 = 0;
 	if (thecommands.empty()) {
 		return;
 	}
-	int* sizes = new int[thecommands.size()+1];
-	ZeroMemory(sizes, sizeof(int) * (thecommands.size() + 1));
     while (!theargs.empty()) {   
         for (auto currentcommand : thecommands) {
             queue<string> tempcommand = currentcommand;
@@ -39,41 +36,38 @@ void CLI::Run(string& command)
             }
             else {
                 if (currentcommand.front().find('|') != string::npos) {
-					cout << currentcommand.front() << endl;
                     if (currentcommand.front().compare("|file") == 0) {
                         HANDLE hFile = CreateFileA(theargs.front().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                         if (hFile != INVALID_HANDLE_VALUE) {
                             subcommands.push_back(tempcommand);
-                            argsinstances.push_back((LPVOID)new string(theargs.front()));
+                            CloseHandle(hFile);
                         }
-                        CloseHandle(hFile);
                     }
                     if (currentcommand.front().compare("|pid") == 0) {
-                        for (int i = 0; i < 10;i++) {
-                            ostringstream oss;
-							oss << i;
-                            if (currentcommand.front().find(oss.str())!=string::npos) {
-                                flag = true;
-                            }
-                        }
-                        if (flag) {
-                            cout << "is PID" << endl;
-                            try {
-                                HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, stoi(theargs.front()));
-                                if (hProcess != INVALID_HANDLE_VALUE) {
-                                    subcommands.push_back(tempcommand);
-                                    argsinstances.push_back((LPVOID)new string(theargs.front()));
-                                }
+                        try {
+                            int pid = stoi(theargs.front());
+                            HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+                            if (hProcess != NULL) {
+                                subcommands.push_back(tempcommand);
                                 CloseHandle(hProcess);
                             }
-                            catch (std::invalid_argument&) {
-                                continue;
-                            }
+                        }
+                        catch (std::invalid_argument&) {
+                            cout << "invalid argument for PID" << endl;
+                        }
+                        catch (std::out_of_range&) {
+                            cout << "PID out of range" << endl;
                         }
                     }
                     if (currentcommand.front().compare("|name") == 0) {
-                        subcommands.push_back(tempcommand);
-                        argsinstances.push_back((LPVOID)new string(theargs.front()));
+                        HANDLE hFile = CreateFileA(theargs.front().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                        if (hFile==INVALID_HANDLE_VALUE) {
+                            subcommands.push_back(tempcommand);
+                            argsinstances.push_back((LPVOID)new string(theargs.front()));
+                        }
+                        else {
+                            CloseHandle(hFile);
+                        }
                     }
                 }
             }
@@ -85,7 +79,6 @@ void CLI::Run(string& command)
               }
               subcommands.clear();
           }
-          cout << count1 << endl;
 		theargs.pop();
         count1++;
     }
@@ -96,9 +89,24 @@ void CLI::Run(string& command)
                 currectcommandname += " ";
             }
             currectcommandname += thecommands[0].front();
+            if (thecommands[0].front().find('|') != string::npos && !theargsCopy.empty()) {
+                if (thecommands[0].front().compare("|file") == 0) {
+                    argsinstances.push_back((LPVOID)new string(theargsCopy.front()));
+                }
+                if (thecommands[0].front().compare("|pid") == 0) {
+                    argsinstances.push_back((LPVOID)new string(theargsCopy.front()));
+                }
+                if (thecommands[0].front().compare("|name") == 0) {
+                    argsinstances.push_back((LPVOID)new string(theargsCopy.front()));
+                }
+            }
+            if (!theargsCopy.empty()) {
+                theargsCopy.pop();
+            }
             thecommands[0].pop();
         }
-		
+        cout << currectcommandname << endl;
+        
 		CLIModule* climodule = new CLIModule();
 		LPVOID commandclassptr = climodule->GetModuleClassPtrByName(currectcommandname);
         if (commandclassptr==0) {
@@ -150,9 +158,11 @@ void CLI::Run(string& command)
     else {
 		cout << "Command not found or ambiguous command." << endl;
     }
-	// 清理参数实例
+	// 清理参数实例 - 释放动态分配的string对象
+    for (LPVOID ptr : argsinstances) {
+        delete (string*)ptr;
+    }
     argsinstances.clear();
-    delete[] sizes;
 }
 queue<string> CLI::SplitString(string& str, char delimiter)
 {

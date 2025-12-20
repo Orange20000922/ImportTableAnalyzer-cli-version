@@ -14,6 +14,7 @@ using namespace std;
 	 vector<LPVOID> PrintAllFunction::Arglist = vector<LPVOID>();
 	 vector<LPVOID> IATHookByNameCommand::ArgsList = vector<LPVOID>();
 	 vector<LPVOID> IATHookByCreateProc::ArgsList = vector<LPVOID>();
+	 DWORD IATHookByCreateProc::pid = 0;
      PrintAllCommand::PrintAllCommand() {
 		FlagHasArgs = FALSE;
      }
@@ -257,6 +258,12 @@ using namespace std;
 			return;
 		}
 		cout << "Exiting the application." << endl;
+		DWORD pid = IATHookByCreateProc::GetPID();
+		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+		if (hProcess!=NULL) {
+			TerminateProcess(hProcess, 0);
+			CloseHandle(hProcess);
+		}
 		exit(0);
 	}
 	BOOL ExitCommand::HasArgs()
@@ -400,19 +407,20 @@ using namespace std;
 				NULL,
 				NULL,
 				FALSE,
-				CREATE_SUSPENDED,
+				CREATE_NEW_CONSOLE,
 				NULL,
 				NULL,
 				&si,
 				&pi
 			);
 			if (flag) {
+				pid = pi.dwProcessId;
 				bool result = analyzer->IATHooked(dllfile, pi.dwProcessId);
 				if (result) {
 					cout << "IAT Hooked successfully!" << endl;
 				}
 				else {
-					cout << "IAT Hook failed!" << endl;
+					cout << "IAT Hook failed!" <<GetLastError()<< endl;
 				}
 			}
 			else {

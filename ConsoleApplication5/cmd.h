@@ -165,6 +165,7 @@ public:
 	static string GetName() {
 		return name;
 	}
+
 };
 class IATHookByCreateProc :public Command{
 	public:
@@ -173,6 +174,8 @@ class IATHookByCreateProc :public Command{
 	ImageTableAnalyzer* analyzer = new ImageTableAnalyzer();
 	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
+private:
+	static DWORD pid;
 public:
 	IATHookByCreateProc();
 	~IATHookByCreateProc();
@@ -185,5 +188,8 @@ public:
 	}
 	static string GetName() {
 		return name;
+	}
+	static DWORD GetPID() {
+		return pid;
 	}
 };
