@@ -104,9 +104,7 @@ void CLI::Run(string& command)
                 theargsCopy.pop();
             }
             thecommands[0].pop();
-        }
-        cout << currectcommandname << endl;
-        
+        }  
 		CLIModule* climodule = new CLIModule();
 		LPVOID commandclassptr = climodule->GetModuleClassPtrByName(currectcommandname);
         if (commandclassptr==0) {
